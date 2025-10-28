@@ -1,28 +1,65 @@
-import ast
 import re
 
 import cpmpy as cp
 from cpmpy.solvers.solver_interface import ExitStatus
 
 
+def tokenize(text):
+    tokens = []
+    atoms = set()
+    i = 0
+    while i < len(text):
+        first_char = text[i]
+        token_matcher = None
+        extract_atoms = False
+        if first_char.isalpha() or first_char == '$':
+            token_matcher = r'([$a-zA-Z]+)'
+            extract_atoms = True
+        elif first_char.isdigit():
+            token_matcher = r'([0-9]+)'
+        elif first_char.isspace():
+            i += 1
+            continue
+        else:
+            token_matcher = r'([^$a-zA-Z0-9\s]+)'
+        token = re.match(token_matcher, text[i:])[0]
+        i += len(token)
+        tokens.append(token)
+        if extract_atoms:
+            atoms.update(set(token) - set('$'))
+    return tokens, atoms
+
+
+
 def use_op(left, right, op):
-    if isinstance(op, ast.GtE):
+    if op == '>=':
         return left >= right
-    elif isinstance(op, ast.Gt):
+    elif op == '>':
         return left > right
-    elif isinstance(op, ast.LtE):
+    elif op == '<=':
         return left <= right
-    elif isinstance(op, ast.Lt):
+    elif op == '<':
         return left < right
-    elif isinstance(op, ast.Eq):
+    elif op == '=' or op == '==':
         return left == right
-    elif isinstance(op, ast.NotEq):
+    elif op == '!=' or op == '<>':
         return left != right
     else:
         raise RuntimeError(f'Unsupported ast operator {op}')
 
 def symbols_to_boolvars(symbols):
     return [cp.BoolVar(name=s) for s in symbols]
+
+def leaf_to_expr(leaf_text):
+    first_char = leaf_text[0]
+    if first_char.isalpha():
+        return cp.sum(symbols_to_boolvars(leaf_text))
+    elif first_char == '$':
+        num_innocent = cp.sum(symbols_to_boolvars(leaf_text[1:]))
+        num_atoms = len(leaf_text) - 1
+        return num_atoms - num_innocent
+    elif first_char.isdigit():
+        return int(leaf_text)
 
 def combinations_expr(symbols, threshold, op):
     left_expr = cp.sum(symbols_to_boolvars(symbols))
@@ -103,33 +140,6 @@ def enter_clue():
         raise Exit("Goodbye!")
     return clue_text
 
-def text_to_ast(text):
-    clue_text = re.sub(r"\b=\b", "==", text)
-    tree = ast.parse(clue_text, mode="eval").body
-    if not isinstance(tree, ast.Compare):
-        raise TryAgain("Only comparison expressions are allowed.")
-    if len(tree.ops) != 1:
-        raise TryAgain("Only one comparison at a time is allowed.")
-    return tree
-
-def ast_to_cpm_expr(tree):
-    atomics = set()
-    comparison_op = tree.ops[0]
-    left = tree.left
-    right = tree.comparators[0]
-    if not isinstance(left, ast.Name):
-        raise TryAgain("The left side of the comparison must be a string of letters.")
-    if not (isinstance(right, ast.Constant) or isinstance(left, ast.Name)):
-        raise TryAgain("The right side of the comparison must be a constant or a string of letters.")
-    atomics.update(left.id)
-    expr = None
-    if isinstance(right, ast.Constant):
-        expr = combinations_expr(left.id, right.value, comparison_op)
-    else:
-        atomics.update(right.id)
-        expr = comparison_expr(left.id, right.id, comparison_op)
-    return expr, atomics
-
 def main():
     the_truth = cp.Model()
     all_atomics = set()  # Variable names added to the model so far
@@ -139,9 +149,16 @@ def main():
         while True:
             try:
                 clue_text = enter_clue()
-                tree = text_to_ast(clue_text)
-                expr, atomics = ast_to_cpm_expr(tree)
+                # tree = text_to_ast(clue_text)
+                # expr, atomics = ast_to_cpm_expr(tree)
+                # all_atomics.update(atomics)
+                tokens, atomics = tokenize(clue_text)
+                if len(tokens) != 3:
+                    raise TryAgain('Syntax error 1')
+                left, op, right = tokens
+                expr = use_op(leaf_to_expr(left), leaf_to_expr(right), op)
                 all_atomics.update(atomics)
+
 
                 the_truth += expr
 
