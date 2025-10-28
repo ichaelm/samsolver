@@ -72,7 +72,7 @@ Examples:
     gh > 0    G and H can't both be criminals
     ijk>lmn   There are more innocents among I, J, and K than L, M, and N.
     pq<=rs    There are at least as many criminals among RS as among PQ.
-    tuv>w     If W is innocent, then at least one of TUV is.
+    tuv>=w     If W is innocent, then at least one of TUV is.
     abc!=0
     abc!=2    There is an odd number of innocents among ABC (needs 2 lines).
 
