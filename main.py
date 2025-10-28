@@ -78,8 +78,10 @@ Examples:
 
 """
 
-TIMEOUT_WARNING = """Warning: the current set of rules is too complex!
-Try restarting with new rules referencing only the unknown people."""
+TIMEOUT_WARNING = """
+Failed to solve: the current set of rules is too complex!
+Try restarting with new rules referencing only the unknown people.
+"""
 
 SOLVER_SECONDS = 1
 
@@ -147,7 +149,7 @@ def main():
                 if solver_status.exitstatus == ExitStatus.UNSATISFIABLE:
                     raise Exit('No solution. Contradiction found.')
                 if solver_status.exitstatus == ExitStatus.UNKNOWN:
-                    print(TIMEOUT_WARNING)
+                    raise Exit(TIMEOUT_WARNING)
 
                 new_known_facts = set(find_known_facts(the_truth, all_atomics))
                 added_facts = new_known_facts - known_facts
