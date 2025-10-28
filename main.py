@@ -8,13 +8,16 @@ def tokenize(text):
     tokens = []
     atoms = set()
     i = 0
+    already_extracted_atoms = False
+    extract_atoms = False
     while i < len(text):
         first_char = text[i]
         token_matcher = None
         extract_atoms = False
         if first_char.isalpha() or first_char == '$':
             token_matcher = r'([$a-zA-Z]+)'
-            extract_atoms = True
+            if not already_extracted_atoms:
+                extract_atoms = True
         elif first_char.isdigit():
             token_matcher = r'([0-9]+)'
         elif first_char.isspace():
@@ -27,9 +30,9 @@ def tokenize(text):
         tokens.append(token)
         if extract_atoms:
             atoms.update(set(token) - set('$'))
+            already_extracted_atoms = True
+            extract_atoms = False
     return tokens, atoms
-
-
 
 def use_op(left, right, op):
     if op == '>=':
@@ -49,6 +52,26 @@ def use_op(left, right, op):
 
 def symbols_to_boolvars(symbols):
     return [cp.BoolVar(name=s) for s in symbols]
+
+def connected_expr(leaf):
+    innocence, symbols = (False, leaf[1:]) if leaf[0] == '$' else (True, leaf)
+    if len(symbols) < 3:
+        return True
+
+    atoms = symbols_to_boolvars(symbols)
+    tests_for_failure = []
+    for center_idx in range(1, len(atoms)-1):
+        left = atoms[:center_idx]
+        center = atoms[center_idx]
+        right = atoms[center_idx+1:]
+        fail_test = None
+        if innocence:
+            fail_test = cp.any(left) & (~center) & cp.any(right)
+        else:
+            fail_test = (~cp.all(left)) & center & (~cp.all(right))
+        tests_for_failure.append(fail_test)
+
+    return ~cp.any(tests_for_failure)
 
 def leaf_to_expr(leaf_text):
     first_char = leaf_text[0]
@@ -149,14 +172,17 @@ def main():
         while True:
             try:
                 clue_text = enter_clue()
-                # tree = text_to_ast(clue_text)
-                # expr, atomics = ast_to_cpm_expr(tree)
-                # all_atomics.update(atomics)
                 tokens, atomics = tokenize(clue_text)
                 if len(tokens) != 3:
                     raise TryAgain('Syntax error 1')
                 left, op, right = tokens
-                expr = use_op(leaf_to_expr(left), leaf_to_expr(right), op)
+                expr = None
+                if op == 'is':
+                    if right != 'connected':
+                        raise TryAgain('Syntax error 2')
+                    expr = connected_expr(left)
+                else:
+                    expr = use_op(leaf_to_expr(left), leaf_to_expr(right), op)
                 all_atomics.update(atomics)
 
 
