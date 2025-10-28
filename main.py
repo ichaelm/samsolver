@@ -110,6 +110,7 @@ def text_to_ast(text):
         raise TryAgain("Only comparison expressions are allowed.")
     if len(tree.ops) != 1:
         raise TryAgain("Only one comparison at a time is allowed.")
+    return tree
 
 def ast_to_cpm_expr(tree):
     atomics = set()
