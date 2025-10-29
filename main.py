@@ -73,6 +73,18 @@ def connected_expr(leaf):
 
     return ~cp.any(tests_for_failure)
 
+def parity_expr(leaf, parity_str):
+    innocence, symbols = (False, leaf[1:]) if leaf[0] == '$' else (True, leaf)
+    atoms = symbols_to_boolvars(symbols)
+    count_expr = None
+    if innocence:
+        count_expr = cp.sum(atoms)
+    else:
+        count_expr = len(atoms) - cp.sum(atoms)
+    parity = 1 if (parity_str == 'odd') else 0
+    return count_expr%2 == parity
+
+
 def leaf_to_expr(leaf_text):
     first_char = leaf_text[0]
     if first_char.isalpha():
@@ -178,9 +190,13 @@ def main():
                 left, op, right = tokens
                 expr = None
                 if op == 'is':
-                    if right != 'connected':
+                    if right == 'connected':
+                        expr = connected_expr(left)
+                    elif right in ['odd', 'even']:
+                        expr = parity_expr(left, right)
+                    else:
                         raise TryAgain('Syntax error 2')
-                    expr = connected_expr(left)
+
                 else:
                     expr = use_op(leaf_to_expr(left), leaf_to_expr(right), op)
                 all_atomics.update(atomics)
