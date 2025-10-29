@@ -8,7 +8,7 @@ def tokenize(text):
     tokens = []
     atoms = set()
     i = 0
-    already_extracted_atoms = False
+    stop_extracting_atoms = False
     extract_atoms = False
     while i < len(text):
         first_char = text[i]
@@ -16,7 +16,7 @@ def tokenize(text):
         extract_atoms = False
         if first_char.isalpha() or first_char == '$':
             token_matcher = r'([$a-zA-Z]+)'
-            if not already_extracted_atoms:
+            if not stop_extracting_atoms:
                 extract_atoms = True
         elif first_char.isdigit():
             token_matcher = r'([0-9]+)'
@@ -28,9 +28,11 @@ def tokenize(text):
         token = re.match(token_matcher, text[i:])[0]
         i += len(token)
         tokens.append(token)
+        if tokens == 'is':
+            stop_extracting_atoms = True
+            extract_atoms = False
         if extract_atoms:
             atoms.update(set(token) - set('$'))
-            already_extracted_atoms = True
             extract_atoms = False
     return tokens, atoms
 
