@@ -127,28 +127,37 @@ Enter the information you're given, one clue at a time. Each piece of
 information you receive may end up as more than one clue in this program.
 
 Each clue uses one of these operators:
-    =         equals
-    !=        does not equal
-    >         is greater than
-    <         is less than
-    >=        is greater than or equal to
-    <=        is less than or equal to
+  x = y             equals
+  x != y            does not equal
+  x > y             is greater than
+  x < y             is less than
+  x >= y            is greater than or equal to
+  x <= y            is less than or equal to
+  x is connected    The innocents or criminals specified are all connected
+  x is even         The number of innocents or criminals specified is even
+  x is odd          The number of innocents or criminals specified is odd
 
-Each side of the operator represents a number of INNOCENT people.
+Each side of the operator will represent either:
+  - A number of INNOCENT people,
+  - A number of CRIMINALS, or
+  - A constant number
 
-When a side has multiple letters, addition is implied.
+For example:
+  abc    The number of INNOCENT people among Alice, Bob, and Carol
+  $abc   The number of CRIMINALS among Alice, Bob, and Carol
 
-Examples:
-    a = 1     A is innocent
-    b = 0     B is a criminal
-    cd = 1    C and D are opposites
-    ef = 2    E and F are both innocent
-    gh > 0    G and H can't both be criminals
-    ijk>lmn   There are more innocents among I, J, and K than L, M, and N.
-    pq<=rs    There are at least as many criminals among RS as among PQ.
-    tuv>=w     If W is innocent, then at least one of TUV is.
-    abc!=0
-    abc!=2    There is an odd number of innocents among ABC (needs 2 lines).
+Full clue examples:
+    a = 1              A is innocent
+    b = 0              B is a criminal
+    cd = 1             C and D are opposites
+    $ef = 2            E and F are both criminals
+    gh > 0             G and H can't both be criminals
+    ijk>lmn            There are more innocents among I, J, and K than L, M, and N
+    $pq>=$rs           There are at least as many criminals among PQ as among RS
+    tuv>=w             If W is innocent, then at least one of TUV is
+    abc is odd         There is an odd number of innocents among ABC
+    abc is connected   Any innocents among abc are connected, in the order specified
+    $abc is connected  Any criminals among abc are connected, in the order specified
 
 """
 
